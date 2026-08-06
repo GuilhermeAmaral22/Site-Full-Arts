@@ -9,7 +9,7 @@ function criarCardProduto(produto) {
 
   card.innerHTML = `
     <a class="card-produto__link" href="produto.html?id=${encodeURIComponent(produto.id)}">
-      <img class="card-produto__img" src="${produto.imagens[0]}" alt="${produto.nome}" loading="lazy" />
+      <img class="card-produto__img" src="${produto.imagens[0] || ""}" alt="${produto.nome}" loading="lazy" />
       <div class="card-produto__body">
         <h3 class="card-produto__nome">${produto.nome}</h3>
         <p class="card-produto__desc">${produto.descricao}</p>
@@ -26,22 +26,22 @@ function criarCardProduto(produto) {
   return card;
 }
 
-function renderizarProdutos() {
+async function renderizarProdutos() {
   const grid = document.getElementById("grid-produtos");
-  const produtos = obterProdutos().filter(produtoDisponivel);
 
-  if (produtos.length === 0) {
-    grid.innerHTML = `<p class="grid-vazio">Nenhum produto cadastrado ainda.</p>`;
-    return;
+  try {
+    const produtos = await obterProdutosAtivos();
+
+    if (produtos.length === 0) {
+      grid.innerHTML = `<p class="grid-vazio">Nenhum produto cadastrado ainda.</p>`;
+      return;
+    }
+
+    produtos.forEach((produto) => grid.appendChild(criarCardProduto(produto)));
+  } catch (erro) {
+    console.error(erro);
+    grid.innerHTML = `<p class="grid-vazio">Não foi possível carregar os produtos agora. Tente recarregar a página.</p>`;
   }
-
-  produtos.forEach((produto) => grid.appendChild(criarCardProduto(produto)));
-}
-
-function avisarRascunhoLocal() {
-  if (!temRascunhoLocal()) return;
-  const aviso = document.getElementById("aviso-rascunho");
-  if (aviso) aviso.hidden = false;
 }
 
 // ==== Carrossel da home ====
@@ -107,8 +107,9 @@ function iniciarCarrossel() {
   reiniciarAutoplay();
 }
 
-renderizarProdutos();
-avisarRascunhoLocal();
-configurarRodape();
-configurarMenuMobile();
-iniciarCarrossel();
+(async function iniciar() {
+  await renderizarProdutos();
+  configurarRodape();
+  configurarMenuMobile();
+  iniciarCarrossel();
+})();

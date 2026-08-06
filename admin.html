@@ -13,7 +13,10 @@
     <div class="container header-inner">
       <a href="index.html" class="logo">Full<span>Arts</span></a>
       <span class="admin-titulo">Painel Admin</span>
-      <a href="index.html" class="nav-admin">Ver site</a>
+      <div class="admin-header-acoes">
+        <a href="index.html" class="nav-admin">Ver site</a>
+        <button id="btn-logout" class="nav-admin" type="button" hidden>Sair</button>
+      </div>
     </div>
   </header>
 
@@ -23,6 +26,7 @@
       <h1>Entrar no painel</h1>
       <p>Área restrita para gerenciar os produtos da loja.</p>
       <form id="form-login" class="admin-login-form">
+        <input type="email" id="email" placeholder="E-mail" required autocomplete="username" />
         <input type="password" id="senha" placeholder="Senha" required autocomplete="current-password" />
         <button type="submit" class="btn btn-primary">Entrar</button>
       </form>
@@ -39,9 +43,8 @@
       <div id="tab-produtos" class="admin-tab-conteudo">
 
         <p class="admin-aviso">
-          Os produtos adicionados aqui ficam salvos apenas neste navegador (rascunho local).
-          Quando estiver satisfeito, clique em <strong>Exportar catálogo</strong> e cole o código
-          gerado em <code>js/produtos-data.js</code> para publicar de vez no site.
+          Mudanças feitas aqui já ficam publicadas na hora — qualquer visitante do site vê o
+          catálogo atualizado, de qualquer dispositivo.
         </p>
 
         <div class="admin-grid">
@@ -79,20 +82,9 @@
           <div class="admin-lista-box">
             <div class="admin-lista-header">
               <h2>Produtos cadastrados</h2>
-              <div class="admin-lista-acoes">
-                <button id="btn-exportar" class="btn btn-whatsapp" type="button">Exportar catálogo</button>
-                <button id="btn-restaurar" class="btn btn-ghost" type="button">Restaurar padrão</button>
-              </div>
             </div>
             <div id="lista-produtos" class="admin-lista"></div>
           </div>
-        </div>
-
-        <div id="caixa-exportar" class="admin-exportar" hidden>
-          <h3>Código para publicar</h3>
-          <p>Copie o texto abaixo e substitua o conteúdo do arquivo <code>js/produtos-data.js</code>.</p>
-          <textarea id="texto-exportar" readonly rows="14"></textarea>
-          <button id="btn-copiar" class="btn btn-primary" type="button">Copiar código</button>
         </div>
 
       </div>
@@ -179,7 +171,8 @@
     </section>
   </main>
 
-  <script src="js/produtos-data.js"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-config.js"></script>
   <script src="js/produtos-store.js"></script>
   <script src="js/vendas-store.js"></script>
   <script src="js/admin.js"></script>

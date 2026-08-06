@@ -1,47 +1,53 @@
-// Camada de acesso aos produtos: lê/escreve os rascunhos feitos no painel
-// admin (guardados no localStorage deste navegador) e cai para o catálogo
-// publicado (PRODUTOS_PADRAO) quando não há rascunho salvo.
-const CHAVE_STORAGE = "fullarts_produtos";
+// Camada de acesso aos produtos: lê e grava direto na tabela "produtos" do
+// Supabase. Qualquer visitante consegue ler (select); só um admin logado
+// consegue inserir, editar ou excluir (isso é garantido pelas políticas de
+// segurança configuradas no banco, não só aqui no front-end).
 
-// Rascunhos salvos antes da galeria de várias fotos tinham um campo
-// "imagem" (texto único) em vez de "imagens" (lista). Normaliza aqui para
-// que rascunhos antigos continuem funcionando sem quebrar a página.
-// Também garante o campo "ativo" em produtos salvos antes dessa opção existir.
-function normalizarProduto(produto) {
-  const normalizado = Array.isArray(produto.imagens)
-    ? produto
-    : { ...produto, imagens: produto.imagem ? [produto.imagem] : [] };
-  return { ...normalizado, ativo: normalizado.ativo !== false };
+async function obterProdutos() {
+  const { data, error } = await supabaseClient
+    .from("produtos")
+    .select("*")
+    .order("criado_em", { ascending: true });
+
+  if (error) {
+    console.error("Erro ao carregar produtos:", error);
+    return [];
+  }
+  return data;
+}
+
+async function obterProdutosAtivos() {
+  const produtos = await obterProdutos();
+  return produtos.filter(produtoDisponivel);
+}
+
+async function obterProdutoPorId(id) {
+  const { data, error } = await supabaseClient.from("produtos").select("*").eq("id", id).maybeSingle();
+
+  if (error) {
+    console.error("Erro ao carregar produto:", error);
+    return null;
+  }
+  return data;
+}
+
+async function criarProduto(dados) {
+  const { data, error } = await supabaseClient.from("produtos").insert(dados).select().single();
+  if (error) throw error;
+  return data;
+}
+
+async function atualizarProduto(id, dados) {
+  const { data, error } = await supabaseClient.from("produtos").update(dados).eq("id", id).select().single();
+  if (error) throw error;
+  return data;
+}
+
+async function excluirProduto(id) {
+  const { error } = await supabaseClient.from("produtos").delete().eq("id", id);
+  if (error) throw error;
 }
 
 function produtoDisponivel(produto) {
   return !!produto && produto.ativo !== false;
-}
-
-function obterProdutos() {
-  const bruto = localStorage.getItem(CHAVE_STORAGE);
-  if (!bruto) return [...PRODUTOS_PADRAO];
-
-  try {
-    const lista = JSON.parse(bruto);
-    return Array.isArray(lista) ? lista.map(normalizarProduto) : [...PRODUTOS_PADRAO];
-  } catch {
-    return [...PRODUTOS_PADRAO];
-  }
-}
-
-function salvarProdutos(lista) {
-  localStorage.setItem(CHAVE_STORAGE, JSON.stringify(lista));
-}
-
-function gerarId() {
-  return `p_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-}
-
-function temRascunhoLocal() {
-  return localStorage.getItem(CHAVE_STORAGE) !== null;
-}
-
-function obterProdutoPorId(id) {
-  return obterProdutos().find((produto) => produto.id === id);
 }

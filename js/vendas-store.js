@@ -1,31 +1,28 @@
-// Camada de acesso às vendas registradas no painel admin (guardadas no
-// localStorage deste navegador). Cada venda guarda os valores já calculados
-// no momento do cadastro, para que o histórico não mude se as regras de
-// taxa/custo forem alteradas depois.
-const CHAVE_STORAGE_VENDAS = "fullarts_vendas";
-
+// Camada de acesso às vendas: lê e grava direto na tabela "vendas" do
+// Supabase. Só um admin logado consegue ler ou gravar (dado privado do
+// negócio) — garantido pelas políticas de segurança do banco.
 const TAXA_FIXA_MARKETPLACE = 4;
 const TAXA_PERCENTUAL_MARKETPLACE = 0.18;
 const PRECO_POR_GRAMA = 100 / 1000; // R$ 100,00 a cada 1000g
 
-function obterVendas() {
-  const bruto = localStorage.getItem(CHAVE_STORAGE_VENDAS);
-  if (!bruto) return [];
+async function obterVendas() {
+  const { data, error } = await supabaseClient.from("vendas").select("*").order("data", { ascending: false });
 
-  try {
-    const lista = JSON.parse(bruto);
-    return Array.isArray(lista) ? lista : [];
-  } catch {
+  if (error) {
+    console.error("Erro ao carregar vendas:", error);
     return [];
   }
+  return data;
 }
 
-function salvarVendas(lista) {
-  localStorage.setItem(CHAVE_STORAGE_VENDAS, JSON.stringify(lista));
+async function criarVenda(dados) {
+  const { error } = await supabaseClient.from("vendas").insert(dados);
+  if (error) throw error;
 }
 
-function gerarIdVenda() {
-  return `v_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+async function excluirVenda(id) {
+  const { error } = await supabaseClient.from("vendas").delete().eq("id", id);
+  if (error) throw error;
 }
 
 function calcularVenda({ valorVenda, pesoGramas, outrosCustos }) {

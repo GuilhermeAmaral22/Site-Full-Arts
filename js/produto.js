@@ -1,7 +1,3 @@
-const idProduto = new URLSearchParams(window.location.search).get("id");
-const produtoEncontrado = idProduto ? obterProdutoPorId(idProduto) : null;
-const produtoAtual = produtoDisponivel(produtoEncontrado) ? produtoEncontrado : null;
-
 function linkWhatsappPedido(nomeProduto) {
   const mensagem = `Olá! Quero fazer o pedido de: ${nomeProduto}`;
   return `https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(mensagem)}`;
@@ -40,8 +36,17 @@ function renderizarGaleria(imagens, nome) {
   mostrar(0);
 }
 
-function renderizarProduto() {
+async function renderizarProduto() {
   const container = document.getElementById("produto-conteudo");
+  const idProduto = new URLSearchParams(window.location.search).get("id");
+
+  let produtoAtual = null;
+  try {
+    const produtoEncontrado = idProduto ? await obterProdutoPorId(idProduto) : null;
+    produtoAtual = produtoDisponivel(produtoEncontrado) ? produtoEncontrado : null;
+  } catch (erro) {
+    console.error(erro);
+  }
 
   if (!produtoAtual) {
     container.innerHTML = `
@@ -72,6 +77,8 @@ function renderizarProduto() {
   renderizarGaleria(produtoAtual.imagens, produtoAtual.nome);
 }
 
-renderizarProduto();
-configurarRodape();
-configurarMenuMobile();
+(async function iniciar() {
+  await renderizarProduto();
+  configurarRodape();
+  configurarMenuMobile();
+})();

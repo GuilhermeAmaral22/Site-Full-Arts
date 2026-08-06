@@ -1,9 +1,3 @@
-// Troque esta senha antes de publicar o site. Isso é apenas uma trava
-// simples para evitar cliques acidentais — não é uma senha de verdade
-// protegendo um servidor, então não reutilize uma senha importante aqui.
-const ADMIN_SENHA = "fullarts123";
-const SESSAO_LOGIN = "fullarts_admin_logado";
-
 const TAMANHO_MAX_IMAGEM = 900;
 const QUALIDADE_IMAGEM = 0.8;
 
@@ -28,6 +22,30 @@ function redimensionarImagem(arquivo) {
   });
 }
 
+// Envia uma foto (data URL) para o Storage do Supabase e devolve a URL pública.
+async function enviarFoto(dataUrl) {
+  const blob = await (await fetch(dataUrl)).blob();
+  const caminho = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+
+  const { error } = await supabaseClient.storage.from("produtos").upload(caminho, blob, {
+    contentType: "image/jpeg",
+  });
+  if (error) throw error;
+
+  const { data } = supabaseClient.storage.from("produtos").getPublicUrl(caminho);
+  return data.publicUrl;
+}
+
+// Fotos já salvas (URL do Storage) ficam como estão; só as novas (data URL,
+// escolhidas agora no formulário) são enviadas para o Storage.
+async function resolverImagens(lista) {
+  const resultado = [];
+  for (const item of lista) {
+    resultado.push(item.startsWith("data:") ? await enviarFoto(item) : item);
+  }
+  return resultado;
+}
+
 // ---- Números e moeda ----
 
 function paraNumero(valor) {
@@ -41,17 +59,18 @@ function paraNumero(valor) {
 }
 
 function formatarMoeda(numero) {
-  return (numero || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  return (Number(numero) || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
 // ---- Login ----
 
-function mostrarPainel() {
+async function mostrarPainel() {
   document.getElementById("gate").hidden = true;
   document.getElementById("painel").hidden = false;
-  renderizarLista();
-  renderizarSelectProdutosVenda();
-  renderizarVendas();
+  document.getElementById("btn-logout").hidden = false;
+  await renderizarLista();
+  await renderizarSelectProdutosVenda();
+  await renderizarVendas();
   definirDataVendaHoje();
 }
 
@@ -60,22 +79,36 @@ function definirDataVendaHoje() {
   document.getElementById("venda-data").value = hoje;
 }
 
-document.getElementById("form-login").addEventListener("submit", (evento) => {
+document.getElementById("form-login").addEventListener("submit", async (evento) => {
   evento.preventDefault();
+  const email = document.getElementById("email").value.trim();
   const senha = document.getElementById("senha").value;
+  const botao = evento.target.querySelector("button[type=submit]");
 
-  if (senha === ADMIN_SENHA) {
-    sessionStorage.setItem(SESSAO_LOGIN, "true");
-    document.getElementById("erro-login").hidden = true;
-    mostrarPainel();
-  } else {
+  botao.disabled = true;
+  const { error } = await supabaseClient.auth.signInWithPassword({ email, password: senha });
+  botao.disabled = false;
+
+  if (error) {
     document.getElementById("erro-login").hidden = false;
+    return;
   }
+
+  document.getElementById("erro-login").hidden = true;
+  await mostrarPainel();
 });
 
-if (sessionStorage.getItem(SESSAO_LOGIN) === "true") {
-  mostrarPainel();
-}
+document.getElementById("btn-logout").addEventListener("click", async () => {
+  await supabaseClient.auth.signOut();
+  location.reload();
+});
+
+(async function verificarSessao() {
+  const {
+    data: { session },
+  } = await supabaseClient.auth.getSession();
+  if (session) await mostrarPainel();
+})();
 
 // ---- Abas (Produtos / Vendas) ----
 
@@ -166,7 +199,7 @@ function sairModoEdicao() {
 
 document.getElementById("btn-cancelar-edicao").addEventListener("click", sairModoEdicao);
 
-document.getElementById("form-produto").addEventListener("submit", (evento) => {
+document.getElementById("form-produto").addEventListener("submit", async (evento) => {
   evento.preventDefault();
 
   if (fotosSelecionadas.length === 0) {
@@ -174,36 +207,44 @@ document.getElementById("form-produto").addEventListener("submit", (evento) => {
     return;
   }
 
-  const dadosFormulario = {
-    nome: document.getElementById("campo-nome").value.trim(),
-    descricao: document.getElementById("campo-descricao").value.trim(),
-    preco: document.getElementById("campo-preco").value.trim(),
-    imagens: [...fotosSelecionadas],
-    ativo: document.getElementById("campo-ativo").checked,
-  };
+  const botao = document.getElementById("btn-salvar-produto");
+  const textoOriginal = botao.textContent;
+  botao.disabled = true;
+  botao.textContent = "Salvando...";
 
-  const produtos = obterProdutos();
+  try {
+    const imagens = await resolverImagens(fotosSelecionadas);
+    const dados = {
+      nome: document.getElementById("campo-nome").value.trim(),
+      descricao: document.getElementById("campo-descricao").value.trim(),
+      preco: document.getElementById("campo-preco").value.trim(),
+      imagens,
+      ativo: document.getElementById("campo-ativo").checked,
+    };
 
-  if (produtoEditandoId) {
-    const indice = produtos.findIndex((produto) => produto.id === produtoEditandoId);
-    if (indice !== -1) {
-      produtos[indice] = { ...produtos[indice], ...dadosFormulario };
+    if (produtoEditandoId) {
+      await atualizarProduto(produtoEditandoId, dados);
+    } else {
+      await criarProduto(dados);
     }
-  } else {
-    produtos.push({ id: gerarId(), ...dadosFormulario });
-  }
 
-  salvarProdutos(produtos);
-  sairModoEdicao();
-  renderizarLista();
-  renderizarSelectProdutosVenda();
+    sairModoEdicao();
+    await renderizarLista();
+    await renderizarSelectProdutosVenda();
+  } catch (erro) {
+    console.error(erro);
+    alert("Não foi possível salvar o produto. Tente novamente.");
+    botao.textContent = textoOriginal;
+  } finally {
+    botao.disabled = false;
+  }
 });
 
 // ---- Lista / exclusão / status / edição ----
 
-function renderizarLista() {
+async function renderizarLista() {
   const container = document.getElementById("lista-produtos");
-  const produtos = obterProdutos();
+  const produtos = await obterProdutos();
 
   if (produtos.length === 0) {
     container.innerHTML = `<p class="admin-lista-vazia">Nenhum produto cadastrado.</p>`;
@@ -216,7 +257,7 @@ function renderizarLista() {
     const item = document.createElement("div");
     item.className = "admin-item";
     item.innerHTML = `
-      <img src="${produto.imagens[0]}" alt="${produto.nome}" />
+      <img src="${produto.imagens[0] || ""}" alt="${produto.nome}" />
       <div class="admin-item__info">
         <strong>${produto.nome}</strong>
         <span>${produto.preco}</span>
@@ -232,8 +273,8 @@ function renderizarLista() {
   });
 
   container.querySelectorAll(".admin-item__editar").forEach((botao) => {
-    botao.addEventListener("click", () => {
-      const produto = obterProdutoPorId(botao.dataset.id);
+    botao.addEventListener("click", async () => {
+      const produto = await obterProdutoPorId(botao.dataset.id);
       if (produto) entrarModoEdicao(produto);
     });
   });
@@ -243,79 +284,43 @@ function renderizarLista() {
   });
 
   container.querySelectorAll(".admin-item__excluir").forEach((botao) => {
-    botao.addEventListener("click", () => excluirProduto(botao.dataset.id));
+    botao.addEventListener("click", () => excluirProdutoClique(botao.dataset.id));
   });
 }
 
-function alternarStatusProduto(id) {
-  const produtos = obterProdutos();
-  const produto = produtos.find((produto) => produto.id === id);
+async function alternarStatusProduto(id) {
+  const produto = await obterProdutoPorId(id);
   if (!produto) return;
 
-  produto.ativo = produto.ativo === false;
-  salvarProdutos(produtos);
-  renderizarLista();
-  renderizarSelectProdutosVenda();
+  try {
+    await atualizarProduto(id, { ativo: produto.ativo === false });
+    await renderizarLista();
+    await renderizarSelectProdutosVenda();
+  } catch (erro) {
+    console.error(erro);
+    alert("Não foi possível atualizar o status do produto.");
+  }
 }
 
-function excluirProduto(id) {
+async function excluirProdutoClique(id) {
+  if (!confirm("Tem certeza que deseja excluir este produto? Essa ação não pode ser desfeita.")) return;
   if (produtoEditandoId === id) sairModoEdicao();
-  const produtos = obterProdutos().filter((produto) => produto.id !== id);
-  salvarProdutos(produtos);
-  renderizarLista();
-  renderizarSelectProdutosVenda();
+
+  try {
+    await excluirProduto(id);
+    await renderizarLista();
+    await renderizarSelectProdutosVenda();
+  } catch (erro) {
+    console.error(erro);
+    alert("Não foi possível excluir o produto.");
+  }
 }
-
-// ---- Exportar / restaurar ----
-
-function gerarCodigoExportacao(produtos) {
-  const itens = produtos
-    .map((produto) => {
-      const imagens = produto.imagens.map((src) => `      "${src}"`).join(",\n");
-      return `  {
-    id: "${produto.id}",
-    nome: "${produto.nome.replace(/"/g, '\\"')}",
-    descricao: "${produto.descricao.replace(/"/g, '\\"')}",
-    preco: "${produto.preco.replace(/"/g, '\\"')}",
-    imagens: [
-${imagens}
-    ],
-    ativo: ${produto.ativo !== false},
-  }`;
-    })
-    .join(",\n");
-
-  return `const PRODUTOS_PADRAO = [\n${itens}\n];\n`;
-}
-
-document.getElementById("btn-exportar").addEventListener("click", () => {
-  const codigo = gerarCodigoExportacao(obterProdutos());
-  document.getElementById("texto-exportar").value = codigo;
-  document.getElementById("caixa-exportar").hidden = false;
-});
-
-document.getElementById("btn-copiar").addEventListener("click", async () => {
-  const texto = document.getElementById("texto-exportar");
-  await navigator.clipboard.writeText(texto.value);
-  const botao = document.getElementById("btn-copiar");
-  const original = botao.textContent;
-  botao.textContent = "Copiado!";
-  setTimeout(() => (botao.textContent = original), 1500);
-});
-
-document.getElementById("btn-restaurar").addEventListener("click", () => {
-  if (!confirm("Isso apaga o rascunho local e volta para o catálogo publicado. Continuar?")) return;
-  localStorage.removeItem(CHAVE_STORAGE);
-  sairModoEdicao();
-  renderizarLista();
-  renderizarSelectProdutosVenda();
-});
 
 // ---- Vendas: registrar ----
 
-function renderizarSelectProdutosVenda() {
+async function renderizarSelectProdutosVenda() {
   const select = document.getElementById("venda-produto");
-  const produtos = obterProdutos();
+  const produtos = await obterProdutos();
   const selecionadoAnterior = select.value;
 
   if (produtos.length === 0) {
@@ -333,13 +338,13 @@ function renderizarSelectProdutosVenda() {
   if (produtos.some((produto) => produto.id === selecionadoAnterior)) {
     select.value = selecionadoAnterior;
   } else {
-    preencherValorSugerido();
+    await preencherValorSugerido();
   }
 }
 
-function preencherValorSugerido() {
+async function preencherValorSugerido() {
   const select = document.getElementById("venda-produto");
-  const produto = obterProdutoPorId(select.value);
+  const produto = await obterProdutoPorId(select.value);
   if (produto) {
     document.getElementById("venda-valor").value = produto.preco;
   }
@@ -375,11 +380,11 @@ function atualizarResumoVenda() {
   document.getElementById(id).addEventListener("input", atualizarResumoVenda);
 });
 
-document.getElementById("form-venda").addEventListener("submit", (evento) => {
+document.getElementById("form-venda").addEventListener("submit", async (evento) => {
   evento.preventDefault();
 
   const produtoId = document.getElementById("venda-produto").value;
-  const produto = obterProdutoPorId(produtoId);
+  const produto = await obterProdutoPorId(produtoId);
   if (!produto) {
     alert("Selecione um produto válido.");
     return;
@@ -397,46 +402,45 @@ document.getElementById("form-venda").addEventListener("submit", (evento) => {
 
   const { custoProducao, taxaMarketplace, lucro } = calcularVenda({ valorVenda, pesoGramas, outrosCustos });
 
-  const venda = {
-    id: gerarIdVenda(),
-    produtoId: produto.id,
-    produtoNome: produto.nome,
-    data,
-    valorVenda,
-    pesoGramas,
-    outrosCustos,
-    custoProducao,
-    taxaMarketplace,
-    lucro,
-  };
+  try {
+    await criarVenda({
+      produto_id: produto.id,
+      produto_nome: produto.nome,
+      data,
+      valor_venda: valorVenda,
+      peso_gramas: pesoGramas,
+      outros_custos: outrosCustos,
+      custo_producao: custoProducao,
+      taxa_marketplace: taxaMarketplace,
+      lucro,
+    });
 
-  const vendas = obterVendas();
-  vendas.push(venda);
-  salvarVendas(vendas);
-
-  evento.target.reset();
-  document.getElementById("venda-resumo").hidden = true;
-  definirDataVendaHoje();
-  renderizarVendas();
+    evento.target.reset();
+    document.getElementById("venda-resumo").hidden = true;
+    definirDataVendaHoje();
+    await renderizarVendas();
+  } catch (erro) {
+    console.error(erro);
+    alert("Não foi possível registrar a venda. Tente novamente.");
+  }
 });
 
 // ---- Vendas: histórico / filtro / resumo ----
 
-function obterVendasFiltradas() {
+async function obterVendasFiltradas() {
   const inicio = document.getElementById("historico-inicio").value;
   const fim = document.getElementById("historico-fim").value;
+  const vendas = await obterVendas();
 
-  return obterVendas()
-    .filter((venda) => (!inicio || venda.data >= inicio) && (!fim || venda.data <= fim))
-    .sort((a, b) => (a.data < b.data ? 1 : -1));
+  return vendas.filter((venda) => (!inicio || venda.data >= inicio) && (!fim || venda.data <= fim));
 }
 
-function renderizarVendas() {
-  const vendas = obterVendasFiltradas();
+async function renderizarVendas() {
+  const vendas = await obterVendasFiltradas();
 
   const pedidos = vendas.length;
-  const faturamento = vendas.reduce((soma, venda) => soma + venda.valorVenda, 0);
-  const lucro = vendas.reduce((soma, venda) => soma + venda.lucro, 0);
+  const faturamento = vendas.reduce((soma, venda) => soma + Number(venda.valor_venda), 0);
+  const lucro = vendas.reduce((soma, venda) => soma + Number(venda.lucro), 0);
   const custos = faturamento - lucro;
 
   document.getElementById("resumo-pedidos").textContent = pedidos;
@@ -458,8 +462,8 @@ function renderizarVendas() {
     item.className = "admin-item admin-item--venda";
     item.innerHTML = `
       <div class="admin-item__info">
-        <strong>${venda.produtoNome}</strong>
-        <span>${dia}/${mes}/${ano} · Venda: ${formatarMoeda(venda.valorVenda)}</span>
+        <strong>${venda.produto_nome}</strong>
+        <span>${dia}/${mes}/${ano} · Venda: ${formatarMoeda(venda.valor_venda)}</span>
         <span class="admin-status admin-status--${venda.lucro >= 0 ? "ativo" : "inativo"}">Lucro: ${formatarMoeda(venda.lucro)}</span>
       </div>
       <div class="admin-item__acoes">
@@ -470,14 +474,19 @@ function renderizarVendas() {
   });
 
   container.querySelectorAll(".admin-item__excluir").forEach((botao) => {
-    botao.addEventListener("click", () => excluirVenda(botao.dataset.id));
+    botao.addEventListener("click", () => excluirVendaClique(botao.dataset.id));
   });
 }
 
-function excluirVenda(id) {
-  const vendas = obterVendas().filter((venda) => venda.id !== id);
-  salvarVendas(vendas);
-  renderizarVendas();
+async function excluirVendaClique(id) {
+  if (!confirm("Excluir esta venda do histórico?")) return;
+  try {
+    await excluirVenda(id);
+    await renderizarVendas();
+  } catch (erro) {
+    console.error(erro);
+    alert("Não foi possível excluir a venda.");
+  }
 }
 
 document.getElementById("historico-inicio").addEventListener("change", renderizarVendas);

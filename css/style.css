@@ -483,19 +483,10 @@ img {
   padding: 56px 0 96px;
 }
 
-.aviso-rascunho {
-  background: #1c2a1f;
-  border: 1px solid var(--green-dark);
-  color: var(--text);
-  padding: 14px 18px;
-  border-radius: 10px;
-  margin-bottom: 28px;
-  font-size: 0.92rem;
-}
-
-.aviso-rascunho a {
-  color: var(--green);
-  font-weight: 600;
+.admin-header-acoes {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .admin-gate {
@@ -515,11 +506,23 @@ img {
 
 .admin-login-form {
   display: flex;
+  flex-direction: column;
   gap: 10px;
 }
 
 .admin-login-form input {
-  flex: 1;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.95rem;
+}
+
+.admin-login-form input:focus {
+  outline: none;
+  border-color: var(--green-dark);
 }
 
 .admin-erro {
@@ -649,11 +652,6 @@ img {
   margin-bottom: 0;
 }
 
-.admin-lista-acoes {
-  display: flex;
-  gap: 10px;
-}
-
 .admin-lista {
   display: flex;
   flex-direction: column;
@@ -690,37 +688,6 @@ img {
 .admin-item__info span {
   color: var(--green);
   font-size: 0.9rem;
-}
-
-.admin-exportar {
-  margin-top: 32px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 24px;
-}
-
-.admin-exportar h3 {
-  margin-bottom: 8px;
-}
-
-.admin-exportar p {
-  color: var(--text-muted);
-  font-size: 0.9rem;
-  margin-bottom: 14px;
-}
-
-.admin-exportar textarea {
-  width: 100%;
-  background: var(--bg-alt);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 12px;
-  color: var(--text);
-  font-family: "SF Mono", Menlo, monospace;
-  font-size: 0.82rem;
-  margin-bottom: 14px;
-  resize: vertical;
 }
 
 .admin-tabs {
