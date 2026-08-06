@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="600" viewBox="0 0 1600 600">
+  <rect width="1600" height="600" fill="#141815"/>
+  <rect x="1120" y="80" width="220" height="220" rx="20" fill="none" stroke="#39e07a" stroke-width="3" opacity="0.6" transform="rotate(20 1230 190)"/>
+  <rect x="1160" y="260" width="180" height="180" rx="16" fill="none" stroke="#1f9e56" stroke-width="3" opacity="0.8" transform="rotate(-15 1250 350)"/>
+  <text x="100" y="280" font-family="Arial, sans-serif" font-size="56" font-weight="bold" fill="#f2f5f3">Fale com a gente</text>
+  <text x="100" y="345" font-family="Arial, sans-serif" font-size="28" fill="#a3ada7">e peça o seu projeto pelo WhatsApp</text>
+</svg>

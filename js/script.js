@@ -1,0 +1,114 @@
+function linkWhatsapp(nomeProduto) {
+  const mensagem = `Olá! Tenho interesse no produto: ${nomeProduto}`;
+  return `https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(mensagem)}`;
+}
+
+function criarCardProduto(produto) {
+  const card = document.createElement("article");
+  card.className = "card-produto";
+
+  card.innerHTML = `
+    <a class="card-produto__link" href="produto.html?id=${encodeURIComponent(produto.id)}">
+      <img class="card-produto__img" src="${produto.imagens[0]}" alt="${produto.nome}" loading="lazy" />
+      <div class="card-produto__body">
+        <h3 class="card-produto__nome">${produto.nome}</h3>
+        <p class="card-produto__desc">${produto.descricao}</p>
+        <span class="card-produto__preco">${produto.preco}</span>
+      </div>
+    </a>
+    <div class="card-produto__acoes">
+      <a class="btn btn-whatsapp" href="${linkWhatsapp(produto.nome)}" target="_blank" rel="noopener">
+        Pedir no WhatsApp
+      </a>
+    </div>
+  `;
+
+  return card;
+}
+
+function renderizarProdutos() {
+  const grid = document.getElementById("grid-produtos");
+  const produtos = obterProdutos().filter(produtoDisponivel);
+
+  if (produtos.length === 0) {
+    grid.innerHTML = `<p class="grid-vazio">Nenhum produto cadastrado ainda.</p>`;
+    return;
+  }
+
+  produtos.forEach((produto) => grid.appendChild(criarCardProduto(produto)));
+}
+
+function avisarRascunhoLocal() {
+  if (!temRascunhoLocal()) return;
+  const aviso = document.getElementById("aviso-rascunho");
+  if (aviso) aviso.hidden = false;
+}
+
+// ==== Carrossel da home ====
+// Troque estes caminhos pelas suas próprias imagens quando quiser
+// (mesmas proporções ficam melhores: recomendado por volta de 1600x600).
+const IMAGENS_CARROSSEL = [
+  "img/banner/banner1.svg",
+  "img/banner/banner2.svg",
+  "img/banner/banner3.svg",
+];
+
+const INTERVALO_CARROSSEL = 4500;
+
+function iniciarCarrossel() {
+  const track = document.getElementById("carrossel-track");
+  const dotsContainer = document.getElementById("carrossel-dots");
+  const btnPrev = document.getElementById("carrossel-prev");
+  const btnNext = document.getElementById("carrossel-next");
+  if (!track) return;
+
+  let atual = 0;
+  let timer;
+
+  track.innerHTML = IMAGENS_CARROSSEL.map(
+    (src, i) => `<img src="${src}" alt="Full Arts — destaque ${i + 1}" />`
+  ).join("");
+
+  dotsContainer.innerHTML = IMAGENS_CARROSSEL.map(
+    (_, i) => `<button class="carrossel-dot" data-index="${i}" aria-label="Ir para slide ${i + 1}"></button>`
+  ).join("");
+
+  const dots = dotsContainer.querySelectorAll(".carrossel-dot");
+
+  function irPara(indice) {
+    atual = (indice + IMAGENS_CARROSSEL.length) % IMAGENS_CARROSSEL.length;
+    track.style.transform = `translateX(-${atual * 100}%)`;
+    dots.forEach((dot, i) => dot.classList.toggle("ativo", i === atual));
+  }
+
+  function reiniciarAutoplay() {
+    clearInterval(timer);
+    timer = setInterval(() => irPara(atual + 1), INTERVALO_CARROSSEL);
+  }
+
+  btnPrev.addEventListener("click", () => {
+    irPara(atual - 1);
+    reiniciarAutoplay();
+  });
+
+  btnNext.addEventListener("click", () => {
+    irPara(atual + 1);
+    reiniciarAutoplay();
+  });
+
+  dots.forEach((dot) => {
+    dot.addEventListener("click", () => {
+      irPara(Number(dot.dataset.index));
+      reiniciarAutoplay();
+    });
+  });
+
+  irPara(0);
+  reiniciarAutoplay();
+}
+
+renderizarProdutos();
+avisarRascunhoLocal();
+configurarRodape();
+configurarMenuMobile();
+iniciarCarrossel();

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Full Arts</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <header class="header">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">Full<span>Arts</span></a>
+      <span class="admin-titulo">Painel Admin</span>
+      <a href="index.html" class="nav-admin">Ver site</a>
+    </div>
+  </header>
+
+  <main class="container admin-main">
+
+    <section id="gate" class="admin-gate">
+      <h1>Entrar no painel</h1>
+      <p>Área restrita para gerenciar os produtos da loja.</p>
+      <form id="form-login" class="admin-login-form">
+        <input type="password" id="senha" placeholder="Senha" required autocomplete="current-password" />
+        <button type="submit" class="btn btn-primary">Entrar</button>
+      </form>
+      <p id="erro-login" class="admin-erro" hidden>Senha incorreta.</p>
+    </section>
+
+    <section id="painel" class="admin-painel" hidden>
+
+      <div class="admin-tabs">
+        <button type="button" class="admin-tab ativo" data-tab="produtos">Produtos</button>
+        <button type="button" class="admin-tab" data-tab="vendas">Vendas</button>
+      </div>
+
+      <div id="tab-produtos" class="admin-tab-conteudo">
+
+        <p class="admin-aviso">
+          Os produtos adicionados aqui ficam salvos apenas neste navegador (rascunho local).
+          Quando estiver satisfeito, clique em <strong>Exportar catálogo</strong> e cole o código
+          gerado em <code>js/produtos-data.js</code> para publicar de vez no site.
+        </p>
+
+        <div class="admin-grid">
+          <div class="admin-form-box">
+            <h2 id="titulo-form-produto">Adicionar produto</h2>
+            <form id="form-produto" class="admin-form">
+              <label>
+                Título
+                <input type="text" id="campo-nome" required maxlength="60" />
+              </label>
+              <label>
+                Descrição
+                <textarea id="campo-descricao" required maxlength="240" rows="3"></textarea>
+              </label>
+              <label>
+                Preço (ex: R$ 49,90)
+                <input type="text" id="campo-preco" required placeholder="R$ 0,00" />
+              </label>
+              <label>
+                Fotos do produto
+                <input type="file" id="campo-foto" accept="image/*" multiple />
+              </label>
+              <div id="preview-fotos" class="admin-preview-grid" hidden></div>
+              <label class="admin-checkbox">
+                <input type="checkbox" id="campo-ativo" checked />
+                Anúncio ativo (visível na loja)
+              </label>
+              <div class="admin-form-acoes">
+                <button type="submit" id="btn-salvar-produto" class="btn btn-primary">Adicionar produto</button>
+                <button type="button" id="btn-cancelar-edicao" class="btn btn-ghost" hidden>Cancelar edição</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="admin-lista-box">
+            <div class="admin-lista-header">
+              <h2>Produtos cadastrados</h2>
+              <div class="admin-lista-acoes">
+                <button id="btn-exportar" class="btn btn-whatsapp" type="button">Exportar catálogo</button>
+                <button id="btn-restaurar" class="btn btn-ghost" type="button">Restaurar padrão</button>
+              </div>
+            </div>
+            <div id="lista-produtos" class="admin-lista"></div>
+          </div>
+        </div>
+
+        <div id="caixa-exportar" class="admin-exportar" hidden>
+          <h3>Código para publicar</h3>
+          <p>Copie o texto abaixo e substitua o conteúdo do arquivo <code>js/produtos-data.js</code>.</p>
+          <textarea id="texto-exportar" readonly rows="14"></textarea>
+          <button id="btn-copiar" class="btn btn-primary" type="button">Copiar código</button>
+        </div>
+
+      </div>
+
+      <div id="tab-vendas" class="admin-tab-conteudo" hidden>
+
+        <p class="admin-aviso">
+          Registre aqui os pedidos já vendidos no marketplace. O lucro é calculado automaticamente:
+          taxa fixa de <strong>R$ 4,00</strong> + <strong>18%</strong> do valor da venda (taxas da
+          plataforma), mais o custo de produção (<strong>R$ 100,00 por quilo</strong>, ou seja,
+          R$ 0,10 por grama) e outros custos que você informar (embalagem, etc).
+        </p>
+
+        <div class="admin-grid">
+          <div class="admin-form-box">
+            <h2>Registrar venda</h2>
+            <form id="form-venda" class="admin-form">
+              <label>
+                Produto vendido
+                <select id="venda-produto" required></select>
+              </label>
+              <label>
+                Data da venda
+                <input type="date" id="venda-data" required />
+              </label>
+              <label>
+                Valor da venda (ex: R$ 49,90)
+                <input type="text" id="venda-valor" required placeholder="R$ 0,00" />
+              </label>
+              <label>
+                Peso da peça (gramas)
+                <input type="number" id="venda-peso" required min="0" step="1" placeholder="Ex: 80" />
+              </label>
+              <label>
+                Outros custos (embalagem, etc — opcional)
+                <input type="number" id="venda-outros-custos" min="0" step="0.01" placeholder="R$ 0,00" />
+              </label>
+
+              <div id="venda-resumo" class="admin-venda-resumo" hidden></div>
+
+              <button type="submit" class="btn btn-primary">Registrar venda</button>
+            </form>
+          </div>
+
+          <div class="admin-lista-box">
+            <h2>Histórico</h2>
+            <div class="admin-historico-filtro">
+              <label>
+                De
+                <input type="date" id="historico-inicio" />
+              </label>
+              <label>
+                Até
+                <input type="date" id="historico-fim" />
+              </label>
+              <button id="btn-limpar-filtro" class="btn btn-ghost" type="button">Limpar</button>
+            </div>
+
+            <div class="admin-resumo-cards">
+              <div class="admin-resumo-card">
+                <span>Pedidos</span>
+                <strong id="resumo-pedidos">0</strong>
+              </div>
+              <div class="admin-resumo-card">
+                <span>Faturamento</span>
+                <strong id="resumo-faturamento">R$ 0,00</strong>
+              </div>
+              <div class="admin-resumo-card">
+                <span>Custos e taxas</span>
+                <strong id="resumo-custos">R$ 0,00</strong>
+              </div>
+              <div class="admin-resumo-card admin-resumo-card--lucro">
+                <span>Lucro</span>
+                <strong id="resumo-lucro">R$ 0,00</strong>
+              </div>
+            </div>
+
+            <div id="lista-vendas" class="admin-lista"></div>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+  </main>
+
+  <script src="js/produtos-data.js"></script>
+  <script src="js/produtos-store.js"></script>
+  <script src="js/vendas-store.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

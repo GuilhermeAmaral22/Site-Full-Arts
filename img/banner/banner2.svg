@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="600" viewBox="0 0 1600 600">
+  <rect width="1600" height="600" fill="#0c0f0d"/>
+  <polygon points="1300,100 1420,220 1370,400 1230,400 1180,220" fill="none" stroke="#39e07a" stroke-width="3" opacity="0.6"/>
+  <polygon points="1300,160 1380,240 1345,370 1255,370 1220,240" fill="none" stroke="#1f9e56" stroke-width="3" opacity="0.8"/>
+  <text x="100" y="280" font-family="Arial, sans-serif" font-size="56" font-weight="bold" fill="#f2f5f3">Peças exclusivas,</text>
+  <text x="100" y="345" font-family="Arial, sans-serif" font-size="56" font-weight="bold" fill="#39e07a">feitas sob encomenda</text>
+</svg>

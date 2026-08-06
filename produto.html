@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title id="titulo-pagina">Produto — Full Arts</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <header class="header">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">Full<span>Arts</span></a>
+      <button id="nav-toggle" class="nav-toggle" aria-label="Abrir menu" aria-expanded="false">☰</button>
+      <div id="nav-menu" class="nav-menu">
+        <nav class="nav">
+          <a href="index.html#produtos">Produtos</a>
+          <a href="index.html#sobre">Sobre</a>
+          <a href="index.html#contato">Contato</a>
+          <a href="admin.html" class="nav-admin" title="Painel de administração">Admin</a>
+        </nav>
+        <a href="index.html#contato" class="btn btn-whatsapp nav-cta">Fale conosco</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container produto-main">
+    <a href="index.html#produtos" class="produto-voltar">‹ Voltar para o catálogo</a>
+
+    <div id="produto-conteudo" class="produto-conteudo">
+      <!-- Preenchido automaticamente pelo js/produto.js -->
+    </div>
+  </main>
+
+  <footer id="contato" class="footer">
+    <div class="container footer-inner">
+      <div>
+        <div class="logo">Full<span>Arts</span></div>
+        <p>Impressão 3D sob medida.</p>
+      </div>
+      <div class="footer-contato">
+        <a class="btn btn-whatsapp" id="whatsapp-footer" href="#" target="_blank" rel="noopener">Chamar no WhatsApp</a>
+        <a href="#" id="instagram-link" target="_blank" rel="noopener">@fullarts</a>
+      </div>
+    </div>
+    <p class="footer-copy">&copy; <span id="ano"></span> Full Arts. Todos os direitos reservados.</p>
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script src="js/produtos-data.js"></script>
+  <script src="js/produtos-store.js"></script>
+  <script src="js/menu.js"></script>
+  <script src="js/rodape.js"></script>
+  <script src="js/produto.js"></script>
+</body>
+</html>

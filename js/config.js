@@ -1,0 +1,3 @@
+// ==== CONFIGURAÇÕES DA LOJA ====
+const WHATSAPP_NUMERO = "5585988349931";
+const INSTAGRAM_USUARIO = "fullarts";

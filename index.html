@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Full Arts — Impressão 3D</title>
+  <meta name="description" content="Full Arts — peças e criações em impressão 3D. Confira nosso catálogo." />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <header class="header">
+    <div class="container header-inner">
+      <a href="#" class="logo">Full<span>Arts</span></a>
+      <button id="nav-toggle" class="nav-toggle" aria-label="Abrir menu" aria-expanded="false">☰</button>
+      <div id="nav-menu" class="nav-menu">
+        <nav class="nav">
+          <a href="#produtos">Produtos</a>
+          <a href="#sobre">Sobre</a>
+          <a href="#contato">Contato</a>
+          <a href="admin.html" class="nav-admin" title="Painel de administração">Admin</a>
+        </nav>
+        <a href="#contato" class="btn btn-whatsapp nav-cta">Fale conosco</a>
+      </div>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container hero-inner">
+      <h1>Criações em <span>impressão 3D</span> feitas sob medida</h1>
+      <p>Peças decorativas, personagens, suportes e projetos exclusivos. Dá uma olhada no catálogo abaixo.</p>
+      <a href="#produtos" class="btn btn-primary">Ver produtos</a>
+    </div>
+  </section>
+
+  <section class="carrossel-secao">
+    <div class="container">
+      <div class="carrossel" id="carrossel">
+        <div class="carrossel-track" id="carrossel-track"></div>
+        <button class="carrossel-seta carrossel-seta--prev" id="carrossel-prev" aria-label="Slide anterior">‹</button>
+        <button class="carrossel-seta carrossel-seta--next" id="carrossel-next" aria-label="Próximo slide">›</button>
+        <div class="carrossel-dots" id="carrossel-dots"></div>
+      </div>
+    </div>
+  </section>
+
+  <main>
+    <section id="produtos" class="produtos">
+      <div class="container">
+        <p id="aviso-rascunho" class="aviso-rascunho" hidden>
+          Você está vendo um catálogo em rascunho (salvo só neste navegador). Visitantes reais veem o catálogo publicado.
+          Use o painel <a href="admin.html">Admin</a> para exportar e publicar essas mudanças.
+        </p>
+        <h2 class="section-title">Nossos produtos</h2>
+        <div id="grid-produtos" class="grid-produtos">
+          <!-- Os cards de produto são gerados automaticamente pelo js/script.js -->
+        </div>
+      </div>
+    </section>
+
+    <section id="sobre" class="sobre">
+      <div class="container sobre-inner">
+        <h2 class="section-title">Sobre a Full Arts</h2>
+        <p>
+          Somos uma empresa cearense apaixonada por transformar ideias em objetos reais. Aqui em Fortaleza, unimos tecnologia de impressão 3D com criatividade para dar vida a peças únicas — desde itens decorativos e presentes personalizados até soluções sob medida para o seu projeto.
+Cada peça que sai da nossa impressora carrega cuidado nos detalhes e compromisso com a qualidade. Trabalhamos com pedidos personalizados: seja uma ideia sua, um modelo específico ou algo totalmente novo, adaptamos o processo pra transformar isso em realidade.
+Acreditamos que a impressão 3D é mais do que tecnologia — é uma forma de aproximar as pessoas de criações exclusivas, com agilidade e um toque artesanal que só um trabalho feito com carinho pode oferecer.
+Ficamos no coração de Fortaleza-CE, e é um prazer atender de perto quem também é daqui, com aquele papo e atenção que fazem toda a diferença.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer id="contato" class="footer">
+    <div class="container footer-inner">
+      <div>
+        <div class="logo">Full<span>Arts</span></div>
+        <p>Impressão 3D sob medida.</p>
+      </div>
+      <div class="footer-contato">
+        <a class="btn btn-whatsapp" id="whatsapp-footer" href="#" target="_blank" rel="noopener">Chamar no WhatsApp</a>
+        <a href="#" id="instagram-link" target="_blank" rel="noopener">@fullarts</a>
+      </div>
+    </div>
+    <p class="footer-copy">&copy; <span id="ano"></span> Full Arts. Todos os direitos reservados.</p>
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script src="js/produtos-data.js"></script>
+  <script src="js/produtos-store.js"></script>
+  <script src="js/menu.js"></script>
+  <script src="js/rodape.js"></script>
+  <script src="js/script.js"></script>
+</body>
+</html>
