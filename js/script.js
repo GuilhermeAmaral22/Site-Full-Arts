@@ -81,7 +81,35 @@ async function renderizarCategoriasSidebar() {
       container.querySelectorAll(".categoria-filtro").forEach((b) => b.classList.remove("ativo"));
       botao.classList.add("ativo");
       aplicarFiltros();
+      fecharGavetaCategorias();
     });
+  });
+}
+
+function abrirGavetaCategorias() {
+  document.getElementById("categorias-drawer").classList.add("aberto");
+  document.getElementById("categorias-backdrop").classList.add("aberto");
+  document.getElementById("btn-categorias").setAttribute("aria-expanded", "true");
+}
+
+function fecharGavetaCategorias() {
+  document.getElementById("categorias-drawer").classList.remove("aberto");
+  document.getElementById("categorias-backdrop").classList.remove("aberto");
+  document.getElementById("btn-categorias").setAttribute("aria-expanded", "false");
+}
+
+function configurarGavetaCategorias() {
+  const btnAbrir = document.getElementById("btn-categorias");
+  const btnFechar = document.getElementById("btn-fechar-categorias");
+  const backdrop = document.getElementById("categorias-backdrop");
+  if (!btnAbrir) return;
+
+  btnAbrir.addEventListener("click", abrirGavetaCategorias);
+  btnFechar.addEventListener("click", fecharGavetaCategorias);
+  backdrop.addEventListener("click", fecharGavetaCategorias);
+
+  document.addEventListener("keydown", (evento) => {
+    if (evento.key === "Escape") fecharGavetaCategorias();
   });
 }
 
@@ -181,6 +209,7 @@ function iniciarCarrossel() {
 
 (async function iniciar() {
   configurarBusca();
+  configurarGavetaCategorias();
   await renderizarProdutos();
   configurarRodape();
   configurarMenuMobile();
