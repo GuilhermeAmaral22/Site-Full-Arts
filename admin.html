@@ -37,6 +37,7 @@
 
       <div class="admin-tabs">
         <button type="button" class="admin-tab ativo" data-tab="produtos">Produtos</button>
+        <button type="button" class="admin-tab" data-tab="categorias">Categorias</button>
         <button type="button" class="admin-tab" data-tab="vendas">Vendas</button>
       </div>
 
@@ -64,6 +65,12 @@
                 <input type="text" id="campo-preco" required placeholder="R$ 0,00" />
               </label>
               <label>
+                Categoria
+                <select id="campo-categoria">
+                  <option value="">Sem categoria</option>
+                </select>
+              </label>
+              <label>
                 Fotos do produto
                 <input type="file" id="campo-foto" accept="image/*" multiple />
               </label>
@@ -84,6 +91,33 @@
               <h2>Produtos cadastrados</h2>
             </div>
             <div id="lista-produtos" class="admin-lista"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <div id="tab-categorias" class="admin-tab-conteudo" hidden>
+
+        <p class="admin-aviso">
+          Crie aqui as categorias (ex: Religiosos, Femininos, Decoração, Gamer) para depois
+          escolher uma delas ao cadastrar cada produto.
+        </p>
+
+        <div class="admin-grid">
+          <div class="admin-form-box">
+            <h2>Adicionar categoria</h2>
+            <form id="form-categoria" class="admin-form">
+              <label>
+                Nome da categoria
+                <input type="text" id="campo-categoria-nome" required maxlength="40" placeholder="Ex: Decoração de casa" />
+              </label>
+              <button type="submit" class="btn btn-primary">Adicionar categoria</button>
+            </form>
+          </div>
+
+          <div class="admin-lista-box">
+            <h2>Categorias cadastradas</h2>
+            <div id="lista-categorias" class="admin-lista"></div>
           </div>
         </div>
 
@@ -174,6 +208,7 @@
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script src="js/supabase-config.js"></script>
   <script src="js/produtos-store.js"></script>
+  <script src="js/categorias-store.js"></script>
   <script src="js/vendas-store.js"></script>
   <script src="js/admin.js"></script>
 </body>

@@ -26,18 +26,90 @@ function criarCardProduto(produto) {
   return card;
 }
 
+let produtosCarregados = [];
+let categoriaAtiva = "";
+
+function normalizarTexto(texto) {
+  return (texto || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function aplicarFiltros() {
+  const grid = document.getElementById("grid-produtos");
+  const campoBusca = document.getElementById("campo-busca-header");
+  const termoBusca = normalizarTexto(campoBusca ? campoBusca.value : "");
+
+  const produtosFiltrados = produtosCarregados.filter((produto) => {
+    const pertenceCategoria = !categoriaAtiva || produto.categoria_id === categoriaAtiva;
+    const combinaBusca =
+      !termoBusca ||
+      normalizarTexto(produto.nome).includes(termoBusca) ||
+      normalizarTexto(produto.descricao).includes(termoBusca);
+    return pertenceCategoria && combinaBusca;
+  });
+
+  if (produtosFiltrados.length === 0) {
+    grid.innerHTML =
+      produtosCarregados.length === 0
+        ? `<p class="grid-vazio">Nenhum produto cadastrado ainda.</p>`
+        : `<p class="grid-vazio">Nenhum produto encontrado.</p>`;
+    return;
+  }
+
+  grid.innerHTML = "";
+  produtosFiltrados.forEach((produto) => grid.appendChild(criarCardProduto(produto)));
+}
+
+async function renderizarCategoriasSidebar() {
+  const container = document.getElementById("lista-categorias-filtro");
+  if (!container) return;
+
+  const categorias = await obterCategorias();
+
+  container.innerHTML = [
+    `<button type="button" class="categoria-filtro ativo" data-id="">Todas</button>`,
+    ...categorias.map(
+      (categoria) => `<button type="button" class="categoria-filtro" data-id="${categoria.id}">${categoria.nome}</button>`
+    ),
+  ].join("");
+
+  container.querySelectorAll(".categoria-filtro").forEach((botao) => {
+    botao.addEventListener("click", () => {
+      categoriaAtiva = botao.dataset.id;
+      container.querySelectorAll(".categoria-filtro").forEach((b) => b.classList.remove("ativo"));
+      botao.classList.add("ativo");
+      aplicarFiltros();
+    });
+  });
+}
+
+function configurarBusca() {
+  const form = document.querySelector(".busca-form");
+  const campoBusca = document.getElementById("campo-busca-header");
+  if (!form || !campoBusca) return;
+
+  const termoInicial = new URLSearchParams(window.location.search).get("busca");
+  if (termoInicial) campoBusca.value = termoInicial;
+
+  form.addEventListener("submit", (evento) => {
+    evento.preventDefault();
+    aplicarFiltros();
+    document.getElementById("produtos").scrollIntoView({ behavior: "smooth" });
+  });
+
+  campoBusca.addEventListener("input", aplicarFiltros);
+}
+
 async function renderizarProdutos() {
   const grid = document.getElementById("grid-produtos");
 
+  await renderizarCategoriasSidebar();
+
   try {
-    const produtos = await obterProdutosAtivos();
-
-    if (produtos.length === 0) {
-      grid.innerHTML = `<p class="grid-vazio">Nenhum produto cadastrado ainda.</p>`;
-      return;
-    }
-
-    produtos.forEach((produto) => grid.appendChild(criarCardProduto(produto)));
+    produtosCarregados = await obterProdutosAtivos();
+    aplicarFiltros();
   } catch (erro) {
     console.error(erro);
     grid.innerHTML = `<p class="grid-vazio">Não foi possível carregar os produtos agora. Tente recarregar a página.</p>`;
@@ -108,6 +180,7 @@ function iniciarCarrossel() {
 }
 
 (async function iniciar() {
+  configurarBusca();
   await renderizarProdutos();
   configurarRodape();
   configurarMenuMobile();

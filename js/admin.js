@@ -68,6 +68,8 @@ async function mostrarPainel() {
   document.getElementById("gate").hidden = true;
   document.getElementById("painel").hidden = false;
   document.getElementById("btn-logout").hidden = false;
+  await renderizarListaCategorias();
+  await renderizarSelectCategoriaProduto();
   await renderizarLista();
   await renderizarSelectProdutosVenda();
   await renderizarVendas();
@@ -110,7 +112,7 @@ document.getElementById("btn-logout").addEventListener("click", async () => {
   if (session) await mostrarPainel();
 })();
 
-// ---- Abas (Produtos / Vendas) ----
+// ---- Abas (Produtos / Categorias / Vendas) ----
 
 document.querySelectorAll(".admin-tab").forEach((botao) => {
   botao.addEventListener("click", () => {
@@ -119,9 +121,90 @@ document.querySelectorAll(".admin-tab").forEach((botao) => {
 
     const aba = botao.dataset.tab;
     document.getElementById("tab-produtos").hidden = aba !== "produtos";
+    document.getElementById("tab-categorias").hidden = aba !== "categorias";
     document.getElementById("tab-vendas").hidden = aba !== "vendas";
   });
 });
+
+// ---- Categorias ----
+
+function opcoesCategoriasHtml(categorias, selecionadaId) {
+  return (
+    `<option value="">Sem categoria</option>` +
+    categorias
+      .map(
+        (categoria) =>
+          `<option value="${categoria.id}"${categoria.id === selecionadaId ? " selected" : ""}>${categoria.nome}</option>`
+      )
+      .join("")
+  );
+}
+
+async function renderizarSelectCategoriaProduto() {
+  const select = document.getElementById("campo-categoria");
+  const selecionadaAnterior = select.value;
+  const categorias = await obterCategorias();
+  select.innerHTML = opcoesCategoriasHtml(categorias, selecionadaAnterior);
+}
+
+async function renderizarListaCategorias() {
+  const container = document.getElementById("lista-categorias");
+  const categorias = await obterCategorias();
+
+  if (categorias.length === 0) {
+    container.innerHTML = `<p class="admin-lista-vazia">Nenhuma categoria cadastrada.</p>`;
+    return;
+  }
+
+  container.innerHTML = "";
+  categorias.forEach((categoria) => {
+    const item = document.createElement("div");
+    item.className = "admin-item";
+    item.innerHTML = `
+      <div class="admin-item__info">
+        <strong>${categoria.nome}</strong>
+      </div>
+      <div class="admin-item__acoes">
+        <button class="btn btn-ghost admin-item__excluir" type="button" data-id="${categoria.id}">Excluir</button>
+      </div>
+    `;
+    container.appendChild(item);
+  });
+
+  container.querySelectorAll(".admin-item__excluir").forEach((botao) => {
+    botao.addEventListener("click", () => excluirCategoriaClique(botao.dataset.id));
+  });
+}
+
+document.getElementById("form-categoria").addEventListener("submit", async (evento) => {
+  evento.preventDefault();
+  const campoNome = document.getElementById("campo-categoria-nome");
+  const nome = campoNome.value.trim();
+  if (!nome) return;
+
+  try {
+    await criarCategoria(nome);
+    campoNome.value = "";
+    await renderizarListaCategorias();
+    await renderizarSelectCategoriaProduto();
+  } catch (erro) {
+    console.error(erro);
+    alert("Não foi possível criar a categoria. Talvez já exista uma com esse nome.");
+  }
+});
+
+async function excluirCategoriaClique(id) {
+  if (!confirm("Excluir esta categoria? Produtos que usam ela ficam sem categoria.")) return;
+  try {
+    await excluirCategoria(id);
+    await renderizarListaCategorias();
+    await renderizarSelectCategoriaProduto();
+    await renderizarLista();
+  } catch (erro) {
+    console.error(erro);
+    alert("Não foi possível excluir a categoria.");
+  }
+}
 
 // ---- Fotos selecionadas (permite escolher várias vezes e remover antes de salvar) ----
 
@@ -175,6 +258,7 @@ function entrarModoEdicao(produto) {
   document.getElementById("campo-descricao").value = produto.descricao;
   document.getElementById("campo-preco").value = produto.preco;
   document.getElementById("campo-ativo").checked = produto.ativo !== false;
+  document.getElementById("campo-categoria").value = produto.categoria_id || "";
   fotosSelecionadas = [...produto.imagens];
   renderizarPreviewFotos();
 
@@ -220,6 +304,7 @@ document.getElementById("form-produto").addEventListener("submit", async (evento
       preco: document.getElementById("campo-preco").value.trim(),
       imagens,
       ativo: document.getElementById("campo-ativo").checked,
+      categoria_id: document.getElementById("campo-categoria").value || null,
     };
 
     if (produtoEditandoId) {
@@ -260,7 +345,7 @@ async function renderizarLista() {
       <img src="${produto.imagens[0] || ""}" alt="${produto.nome}" />
       <div class="admin-item__info">
         <strong>${produto.nome}</strong>
-        <span>${produto.preco}</span>
+        <span>${produto.preco}${produto.categoria ? ` · ${produto.categoria.nome}` : ""}</span>
         <span class="admin-status admin-status--${ativo ? "ativo" : "inativo"}">${ativo ? "Ativo" : "Inativo"}</span>
       </div>
       <div class="admin-item__acoes">

@@ -1,5 +1,30 @@
 -- Full Arts — schema do Supabase
 -- Cole este arquivo inteiro no SQL Editor do seu projeto Supabase e clique em "Run".
+-- (Se seu banco já existe, use supabase/migracao-categorias.sql em vez deste.)
+
+-- ==== Categorias ====
+
+create table categorias (
+  id uuid primary key default gen_random_uuid(),
+  nome text not null unique,
+  criado_em timestamptz not null default now()
+);
+
+alter table categorias enable row level security;
+
+create policy "Qualquer pessoa pode ver categorias"
+  on categorias for select
+  using (true);
+
+create policy "Só admin logado pode inserir categorias"
+  on categorias for insert
+  to authenticated
+  with check (true);
+
+create policy "Só admin logado pode excluir categorias"
+  on categorias for delete
+  to authenticated
+  using (true);
 
 -- ==== Produtos ====
 
@@ -10,6 +35,7 @@ create table produtos (
   preco text not null,
   imagens text[] not null default '{}',
   ativo boolean not null default true,
+  categoria_id uuid references categorias(id) on delete set null,
   criado_em timestamptz not null default now()
 );
 

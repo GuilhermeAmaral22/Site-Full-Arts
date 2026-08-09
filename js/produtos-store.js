@@ -6,7 +6,7 @@
 async function obterProdutos() {
   const { data, error } = await supabaseClient
     .from("produtos")
-    .select("*")
+    .select("*, categoria:categorias(id, nome)")
     .order("criado_em", { ascending: true });
 
   if (error) {

@@ -12,6 +12,10 @@
   <header class="header">
     <div class="container header-inner">
       <a href="#" class="logo">Full<span>Arts</span></a>
+      <form class="busca-form" action="index.html" method="get">
+        <input type="search" name="busca" id="campo-busca-header" placeholder="Buscar produto..." />
+        <button type="submit" aria-label="Buscar">🔍</button>
+      </form>
       <button id="nav-toggle" class="nav-toggle" aria-label="Abrir menu" aria-expanded="false">☰</button>
       <div id="nav-menu" class="nav-menu">
         <nav class="nav">
@@ -48,8 +52,18 @@
     <section id="produtos" class="produtos">
       <div class="container">
         <h2 class="section-title">Nossos produtos</h2>
-        <div id="grid-produtos" class="grid-produtos">
-          <!-- Os cards de produto são gerados automaticamente pelo js/script.js -->
+        <div class="produtos-layout">
+          <aside class="produtos-sidebar">
+            <h3>Categorias</h3>
+            <div id="lista-categorias-filtro" class="categorias-filtro">
+              <!-- Botões de categoria gerados automaticamente pelo js/script.js -->
+            </div>
+          </aside>
+          <div class="produtos-principal">
+            <div id="grid-produtos" class="grid-produtos">
+              <!-- Os cards de produto são gerados automaticamente pelo js/script.js -->
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -85,6 +99,7 @@ Ficamos no coração de Fortaleza-CE, e é um prazer atender de perto quem tamb�
   <script src="js/supabase-config.js"></script>
   <script src="js/config.js"></script>
   <script src="js/produtos-store.js"></script>
+  <script src="js/categorias-store.js"></script>
   <script src="js/menu.js"></script>
   <script src="js/rodape.js"></script>
   <script src="js/script.js"></script>
