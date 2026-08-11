@@ -36,6 +36,7 @@ create table produtos (
   imagens text[] not null default '{}',
   ativo boolean not null default true,
   categoria_id uuid references categorias(id) on delete set null,
+  peso_gramas numeric not null default 0,
   criado_em timestamptz not null default now()
 );
 
@@ -67,11 +68,12 @@ create table vendas (
   produto_id uuid references produtos(id) on delete set null,
   produto_nome text not null,
   data date not null,
-  valor_venda numeric not null default 0,
-  peso_gramas numeric not null default 0,
+  quantidade integer not null default 1,
+  canal text not null default 'shopee', -- 'shopee' ou 'direta'
+  valor_venda numeric not null default 0, -- valor líquido recebido (já sem a taxa do marketplace)
+  peso_gramas numeric not null default 0, -- peso de 1 unidade, copiado do produto no momento da venda
   outros_custos numeric not null default 0,
   custo_producao numeric not null default 0,
-  taxa_marketplace numeric not null default 0,
   lucro numeric not null default 0,
   criado_em timestamptz not null default now()
 );

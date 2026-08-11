@@ -257,6 +257,7 @@ function entrarModoEdicao(produto) {
   document.getElementById("campo-nome").value = produto.nome;
   document.getElementById("campo-descricao").value = produto.descricao;
   document.getElementById("campo-preco").value = produto.preco;
+  document.getElementById("campo-peso").value = produto.peso_gramas || "";
   document.getElementById("campo-ativo").checked = produto.ativo !== false;
   document.getElementById("campo-categoria").value = produto.categoria_id || "";
   fotosSelecionadas = [...produto.imagens];
@@ -302,6 +303,7 @@ document.getElementById("form-produto").addEventListener("submit", async (evento
       nome: document.getElementById("campo-nome").value.trim(),
       descricao: document.getElementById("campo-descricao").value.trim(),
       preco: document.getElementById("campo-preco").value.trim(),
+      peso_gramas: paraNumero(document.getElementById("campo-peso").value),
       imagens,
       ativo: document.getElementById("campo-ativo").checked,
       categoria_id: document.getElementById("campo-categoria").value || null,
@@ -403,6 +405,17 @@ async function excluirProdutoClique(id) {
 
 // ---- Vendas: registrar ----
 
+let pesoProdutoSelecionado = 0;
+
+async function atualizarPesoProdutoSelecionado() {
+  const select = document.getElementById("venda-produto");
+  const produto = await obterProdutoPorId(select.value);
+  pesoProdutoSelecionado = produto ? Number(produto.peso_gramas) || 0 : 0;
+  atualizarResumoVenda();
+}
+
+document.getElementById("venda-produto").addEventListener("change", atualizarPesoProdutoSelecionado);
+
 async function renderizarSelectProdutosVenda() {
   const select = document.getElementById("venda-produto");
   const produtos = await obterProdutos();
@@ -410,6 +423,7 @@ async function renderizarSelectProdutosVenda() {
 
   if (produtos.length === 0) {
     select.innerHTML = `<option value="">Nenhum produto cadastrado</option>`;
+    pesoProdutoSelecionado = 0;
     return;
   }
 
@@ -422,46 +436,43 @@ async function renderizarSelectProdutosVenda() {
 
   if (produtos.some((produto) => produto.id === selecionadoAnterior)) {
     select.value = selecionadoAnterior;
-  } else {
-    await preencherValorSugerido();
   }
+
+  await atualizarPesoProdutoSelecionado();
 }
 
-async function preencherValorSugerido() {
-  const select = document.getElementById("venda-produto");
-  const produto = await obterProdutoPorId(select.value);
-  if (produto) {
-    document.getElementById("venda-valor").value = produto.preco;
-  }
-  atualizarResumoVenda();
+function obterQuantidadeVenda() {
+  return Math.max(1, Math.round(paraNumero(document.getElementById("venda-quantidade").value)) || 1);
 }
-
-document.getElementById("venda-produto").addEventListener("change", preencherValorSugerido);
 
 function atualizarResumoVenda() {
   const resumo = document.getElementById("venda-resumo");
-  const valorVenda = paraNumero(document.getElementById("venda-valor").value);
-  const pesoGramas = paraNumero(document.getElementById("venda-peso").value);
+  const valorRecebido = paraNumero(document.getElementById("venda-valor").value);
+  const quantidade = obterQuantidadeVenda();
   const outrosCustos = paraNumero(document.getElementById("venda-outros-custos").value);
 
-  if (!valorVenda && !pesoGramas) {
+  if (!valorRecebido && !pesoProdutoSelecionado) {
     resumo.hidden = true;
     resumo.innerHTML = "";
     return;
   }
 
-  const { custoProducao, taxaMarketplace, lucro } = calcularVenda({ valorVenda, pesoGramas, outrosCustos });
+  const { custoProducao, lucro } = calcularVenda({
+    valorRecebido,
+    pesoUnitarioGramas: pesoProdutoSelecionado,
+    quantidade,
+    outrosCustos,
+  });
 
   resumo.hidden = false;
   resumo.innerHTML = `
-    <div><span>Taxa da plataforma</span><strong>${formatarMoeda(taxaMarketplace)}</strong></div>
-    <div><span>Custo de produção</span><strong>${formatarMoeda(custoProducao)}</strong></div>
+    <div><span>Matéria-prima (${quantidade}× ${pesoProdutoSelecionado}g)</span><strong>${formatarMoeda(custoProducao)}</strong></div>
     <div><span>Outros custos</span><strong>${formatarMoeda(outrosCustos)}</strong></div>
     <div class="admin-venda-resumo__lucro"><span>Lucro estimado</span><strong>${formatarMoeda(lucro)}</strong></div>
   `;
 }
 
-["venda-valor", "venda-peso", "venda-outros-custos"].forEach((id) => {
+["venda-valor", "venda-quantidade", "venda-outros-custos"].forEach((id) => {
   document.getElementById(id).addEventListener("input", atualizarResumoVenda);
 });
 
@@ -475,28 +486,31 @@ document.getElementById("form-venda").addEventListener("submit", async (evento) 
     return;
   }
 
-  const valorVenda = paraNumero(document.getElementById("venda-valor").value);
-  const pesoGramas = paraNumero(document.getElementById("venda-peso").value);
+  const quantidade = obterQuantidadeVenda();
+  const valorRecebido = paraNumero(document.getElementById("venda-valor").value);
   const outrosCustos = paraNumero(document.getElementById("venda-outros-custos").value);
   const data = document.getElementById("venda-data").value;
+  const canal = document.getElementById("venda-canal").value;
 
   if (!data) {
     alert("Informe a data da venda.");
     return;
   }
 
-  const { custoProducao, taxaMarketplace, lucro } = calcularVenda({ valorVenda, pesoGramas, outrosCustos });
+  const pesoUnitarioGramas = Number(produto.peso_gramas) || 0;
+  const { custoProducao, lucro } = calcularVenda({ valorRecebido, pesoUnitarioGramas, quantidade, outrosCustos });
 
   try {
     await criarVenda({
       produto_id: produto.id,
       produto_nome: produto.nome,
       data,
-      valor_venda: valorVenda,
-      peso_gramas: pesoGramas,
+      quantidade,
+      canal,
+      valor_venda: valorRecebido,
+      peso_gramas: pesoUnitarioGramas,
       outros_custos: outrosCustos,
       custo_producao: custoProducao,
-      taxa_marketplace: taxaMarketplace,
       lucro,
     });
 
@@ -524,12 +538,12 @@ async function renderizarVendas() {
   const vendas = await obterVendasFiltradas();
 
   const pedidos = vendas.length;
-  const faturamento = vendas.reduce((soma, venda) => soma + Number(venda.valor_venda), 0);
+  const recebido = vendas.reduce((soma, venda) => soma + Number(venda.valor_venda), 0);
   const lucro = vendas.reduce((soma, venda) => soma + Number(venda.lucro), 0);
-  const custos = faturamento - lucro;
+  const custos = recebido - lucro;
 
   document.getElementById("resumo-pedidos").textContent = pedidos;
-  document.getElementById("resumo-faturamento").textContent = formatarMoeda(faturamento);
+  document.getElementById("resumo-faturamento").textContent = formatarMoeda(recebido);
   document.getElementById("resumo-custos").textContent = formatarMoeda(custos);
   document.getElementById("resumo-lucro").textContent = formatarMoeda(lucro);
 
@@ -545,10 +559,11 @@ async function renderizarVendas() {
     const [ano, mes, dia] = venda.data.split("-");
     const item = document.createElement("div");
     item.className = "admin-item admin-item--venda";
+    const canalLabel = venda.canal === "direta" ? "Venda direta" : "Shopee";
     item.innerHTML = `
       <div class="admin-item__info">
-        <strong>${venda.produto_nome}</strong>
-        <span>${dia}/${mes}/${ano} · Venda: ${formatarMoeda(venda.valor_venda)}</span>
+        <strong>${venda.produto_nome}${venda.quantidade > 1 ? ` × ${venda.quantidade}` : ""}</strong>
+        <span>${dia}/${mes}/${ano} · ${canalLabel} · Recebido: ${formatarMoeda(venda.valor_venda)}</span>
         <span class="admin-status admin-status--${venda.lucro >= 0 ? "ativo" : "inativo"}">Lucro: ${formatarMoeda(venda.lucro)}</span>
       </div>
       <div class="admin-item__acoes">

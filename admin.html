@@ -65,6 +65,10 @@
                 <input type="text" id="campo-preco" required placeholder="R$ 0,00" />
               </label>
               <label>
+                Peso da peça (gramas)
+                <input type="number" id="campo-peso" required min="0" step="1" placeholder="Ex: 80" />
+              </label>
+              <label>
                 Categoria
                 <select id="campo-categoria">
                   <option value="">Sem categoria</option>
@@ -126,10 +130,11 @@
       <div id="tab-vendas" class="admin-tab-conteudo" hidden>
 
         <p class="admin-aviso">
-          Registre aqui os pedidos já vendidos no marketplace. O lucro é calculado automaticamente:
-          taxa fixa de <strong>R$ 4,00</strong> + <strong>18%</strong> do valor da venda (taxas da
-          plataforma), mais o custo de produção (<strong>R$ 100,00 por quilo</strong>, ou seja,
-          R$ 0,10 por grama) e outros custos que você informar (embalagem, etc).
+          Registre aqui os pedidos já vendidos. Em <strong>Valor recebido</strong>, informe quanto
+          você efetivamente ganhou naquele pedido — se foi pela Shopee, é o valor líquido que ela
+          já repassa com a taxa dela descontada; se foi venda direta, é o valor total combinado.
+          O lucro é esse valor menos o custo de matéria-prima (peso do produto × quantidade ×
+          <strong>R$ 0,10/g</strong>) e outros custos que você informar (embalagem, etc).
         </p>
 
         <div class="admin-grid">
@@ -141,16 +146,23 @@
                 <select id="venda-produto" required></select>
               </label>
               <label>
+                Canal da venda
+                <select id="venda-canal">
+                  <option value="shopee" selected>Shopee</option>
+                  <option value="direta">Venda direta</option>
+                </select>
+              </label>
+              <label>
                 Data da venda
                 <input type="date" id="venda-data" required />
               </label>
               <label>
-                Valor da venda (ex: R$ 49,90)
-                <input type="text" id="venda-valor" required placeholder="R$ 0,00" />
+                Quantidade
+                <input type="number" id="venda-quantidade" required min="1" step="1" value="1" />
               </label>
               <label>
-                Peso da peça (gramas)
-                <input type="number" id="venda-peso" required min="0" step="1" placeholder="Ex: 80" />
+                Valor recebido (ex: R$ 49,90)
+                <input type="text" id="venda-valor" required placeholder="R$ 0,00" />
               </label>
               <label>
                 Outros custos (embalagem, etc — opcional)
@@ -183,11 +195,11 @@
                 <strong id="resumo-pedidos">0</strong>
               </div>
               <div class="admin-resumo-card">
-                <span>Faturamento</span>
+                <span>Recebido</span>
                 <strong id="resumo-faturamento">R$ 0,00</strong>
               </div>
               <div class="admin-resumo-card">
-                <span>Custos e taxas</span>
+                <span>Custos</span>
                 <strong id="resumo-custos">R$ 0,00</strong>
               </div>
               <div class="admin-resumo-card admin-resumo-card--lucro">
