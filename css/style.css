@@ -556,6 +556,10 @@ img {
   color: var(--text-muted);
   font-size: 0.92rem;
   flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .card-produto__preco {
