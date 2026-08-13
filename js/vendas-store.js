@@ -24,12 +24,14 @@ async function excluirVenda(id) {
 }
 
 // valorRecebido já é o líquido (a Shopee repassa descontando a taxa dela),
-// então aqui só descontamos o que é nosso: matéria-prima (peso de 1 unidade
-// × quantidade) e outros custos do pedido (embalagem, etc).
-function calcularVenda({ valorRecebido, pesoUnitarioGramas, quantidade, outrosCustos }) {
-  const custoProducao = pesoUnitarioGramas * quantidade * PRECO_POR_GRAMA;
+// então aqui só descontamos o que é nosso: matéria-prima de todos os itens
+// do pedido e outros custos (embalagem, etc).
+// itens: [{ peso_gramas, quantidade }, ...]
+function calcularVenda({ valorRecebido, itens, outrosCustos }) {
+  const pesoTotalGramas = itens.reduce((soma, item) => soma + item.peso_gramas * item.quantidade, 0);
+  const custoProducao = pesoTotalGramas * PRECO_POR_GRAMA;
   const custoTotal = custoProducao + outrosCustos;
   const lucro = valorRecebido - custoTotal;
 
-  return { custoProducao, custoTotal, lucro };
+  return { pesoTotalGramas, custoProducao, custoTotal, lucro };
 }

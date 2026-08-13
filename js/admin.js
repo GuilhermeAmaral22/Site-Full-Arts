@@ -405,88 +405,131 @@ async function excluirProdutoClique(id) {
 
 // ---- Vendas: registrar ----
 
-let pesoProdutoSelecionado = 0;
-
-async function atualizarPesoProdutoSelecionado() {
-  const select = document.getElementById("venda-produto");
-  const produto = await obterProdutoPorId(select.value);
-  pesoProdutoSelecionado = produto ? Number(produto.peso_gramas) || 0 : 0;
-  atualizarResumoVenda();
-}
-
-document.getElementById("venda-produto").addEventListener("change", atualizarPesoProdutoSelecionado);
+let produtosVendaCache = [];
+let itensVenda = []; // [{produto_id, nome, peso_gramas, quantidade}]
 
 async function renderizarSelectProdutosVenda() {
   const select = document.getElementById("venda-produto");
-  const produtos = await obterProdutos();
+  produtosVendaCache = await obterProdutos();
   const selecionadoAnterior = select.value;
 
-  if (produtos.length === 0) {
+  if (produtosVendaCache.length === 0) {
     select.innerHTML = `<option value="">Nenhum produto cadastrado</option>`;
-    pesoProdutoSelecionado = 0;
     return;
   }
 
-  select.innerHTML = produtos
+  select.innerHTML = produtosVendaCache
     .map(
       (produto) =>
         `<option value="${produto.id}">${produto.nome}${produto.ativo === false ? " (inativo)" : ""}</option>`
     )
     .join("");
 
-  if (produtos.some((produto) => produto.id === selecionadoAnterior)) {
+  if (produtosVendaCache.some((produto) => produto.id === selecionadoAnterior)) {
     select.value = selecionadoAnterior;
   }
-
-  await atualizarPesoProdutoSelecionado();
 }
 
 function obterQuantidadeVenda() {
   return Math.max(1, Math.round(paraNumero(document.getElementById("venda-quantidade").value)) || 1);
 }
 
-function atualizarResumoVenda() {
-  const resumo = document.getElementById("venda-resumo");
-  const valorRecebido = paraNumero(document.getElementById("venda-valor").value);
-  const quantidade = obterQuantidadeVenda();
-  const outrosCustos = paraNumero(document.getElementById("venda-outros-custos").value);
+function renderizarItensVenda() {
+  const container = document.getElementById("venda-itens");
 
-  if (!valorRecebido && !pesoProdutoSelecionado) {
-    resumo.hidden = true;
-    resumo.innerHTML = "";
+  if (itensVenda.length === 0) {
+    container.hidden = true;
+    container.innerHTML = "";
     return;
   }
 
-  const { custoProducao, lucro } = calcularVenda({
-    valorRecebido,
-    pesoUnitarioGramas: pesoProdutoSelecionado,
-    quantidade,
-    outrosCustos,
-  });
+  container.hidden = false;
+  container.innerHTML = itensVenda
+    .map(
+      (item, i) => `
+        <div class="venda-item">
+          <span>${item.quantidade}× ${item.nome}</span>
+          <button type="button" class="venda-item__remover" data-index="${i}" aria-label="Remover item">×</button>
+        </div>
+      `
+    )
+    .join("");
 
-  resumo.hidden = false;
-  resumo.innerHTML = `
-    <div><span>Matéria-prima (${quantidade}× ${pesoProdutoSelecionado}g)</span><strong>${formatarMoeda(custoProducao)}</strong></div>
-    <div><span>Outros custos</span><strong>${formatarMoeda(outrosCustos)}</strong></div>
-    <div class="admin-venda-resumo__lucro"><span>Lucro estimado</span><strong>${formatarMoeda(lucro)}</strong></div>
-  `;
+  container.querySelectorAll(".venda-item__remover").forEach((botao) => {
+    botao.addEventListener("click", () => {
+      itensVenda.splice(Number(botao.dataset.index), 1);
+      renderizarItensVenda();
+      atualizarResumoVenda();
+    });
+  });
 }
 
-["venda-valor", "venda-quantidade", "venda-outros-custos"].forEach((id) => {
-  document.getElementById(id).addEventListener("input", atualizarResumoVenda);
-});
-
-document.getElementById("form-venda").addEventListener("submit", async (evento) => {
-  evento.preventDefault();
-
+document.getElementById("btn-adicionar-item").addEventListener("click", () => {
   const produtoId = document.getElementById("venda-produto").value;
-  const produto = await obterProdutoPorId(produtoId);
+  const produto = produtosVendaCache.find((p) => p.id === produtoId);
   if (!produto) {
     alert("Selecione um produto válido.");
     return;
   }
 
   const quantidade = obterQuantidadeVenda();
+  const existente = itensVenda.find((item) => item.produto_id === produto.id);
+
+  if (existente) {
+    existente.quantidade += quantidade;
+  } else {
+    itensVenda.push({
+      produto_id: produto.id,
+      nome: produto.nome,
+      peso_gramas: Number(produto.peso_gramas) || 0,
+      quantidade,
+    });
+  }
+
+  document.getElementById("venda-quantidade").value = "1";
+  renderizarItensVenda();
+  atualizarResumoVenda();
+});
+
+function atualizarResumoVenda() {
+  const resumo = document.getElementById("venda-resumo");
+  const valorRecebido = paraNumero(document.getElementById("venda-valor").value);
+  const outrosCustos = paraNumero(document.getElementById("venda-outros-custos").value);
+
+  if (itensVenda.length === 0) {
+    resumo.hidden = true;
+    resumo.innerHTML = "";
+    return;
+  }
+
+  const { pesoTotalGramas, custoProducao, lucro } = calcularVenda({ valorRecebido, itens: itensVenda, outrosCustos });
+
+  resumo.hidden = false;
+  resumo.innerHTML = `
+    <div><span>Matéria-prima (${pesoTotalGramas}g no total)</span><strong>${formatarMoeda(custoProducao)}</strong></div>
+    <div><span>Outros custos</span><strong>${formatarMoeda(outrosCustos)}</strong></div>
+    <div class="admin-venda-resumo__lucro"><span>Lucro estimado</span><strong>${formatarMoeda(lucro)}</strong></div>
+  `;
+}
+
+["venda-valor", "venda-outros-custos"].forEach((id) => {
+  document.getElementById(id).addEventListener("input", atualizarResumoVenda);
+});
+
+function descreverItensVenda(itens) {
+  return itens
+    .map((item) => `${item.nome}${item.quantidade > 1 ? ` ×${item.quantidade}` : ""}`)
+    .join(" + ");
+}
+
+document.getElementById("form-venda").addEventListener("submit", async (evento) => {
+  evento.preventDefault();
+
+  if (itensVenda.length === 0) {
+    alert("Adicione pelo menos um produto ao pedido.");
+    return;
+  }
+
   const valorRecebido = paraNumero(document.getElementById("venda-valor").value);
   const outrosCustos = paraNumero(document.getElementById("venda-outros-custos").value);
   const data = document.getElementById("venda-data").value;
@@ -497,24 +540,26 @@ document.getElementById("form-venda").addEventListener("submit", async (evento) 
     return;
   }
 
-  const pesoUnitarioGramas = Number(produto.peso_gramas) || 0;
-  const { custoProducao, lucro } = calcularVenda({ valorRecebido, pesoUnitarioGramas, quantidade, outrosCustos });
+  const { pesoTotalGramas, custoProducao, lucro } = calcularVenda({ valorRecebido, itens: itensVenda, outrosCustos });
 
   try {
     await criarVenda({
-      produto_id: produto.id,
-      produto_nome: produto.nome,
+      produto_id: itensVenda[0].produto_id,
+      produto_nome: descreverItensVenda(itensVenda),
       data,
-      quantidade,
+      quantidade: itensVenda.reduce((soma, item) => soma + item.quantidade, 0),
       canal,
+      itens: itensVenda,
       valor_venda: valorRecebido,
-      peso_gramas: pesoUnitarioGramas,
+      peso_gramas: pesoTotalGramas,
       outros_custos: outrosCustos,
       custo_producao: custoProducao,
       lucro,
     });
 
     evento.target.reset();
+    itensVenda = [];
+    renderizarItensVenda();
     document.getElementById("venda-resumo").hidden = true;
     definirDataVendaHoje();
     await renderizarVendas();
@@ -560,9 +605,13 @@ async function renderizarVendas() {
     const item = document.createElement("div");
     item.className = "admin-item admin-item--venda";
     const canalLabel = venda.canal === "direta" ? "Venda direta" : "Shopee";
+    const temItens = Array.isArray(venda.itens) && venda.itens.length > 0;
+    const rotulo = temItens
+      ? descreverItensVenda(venda.itens)
+      : `${venda.produto_nome}${venda.quantidade > 1 ? ` × ${venda.quantidade}` : ""}`;
     item.innerHTML = `
       <div class="admin-item__info">
-        <strong>${venda.produto_nome}${venda.quantidade > 1 ? ` × ${venda.quantidade}` : ""}</strong>
+        <strong>${rotulo}</strong>
         <span>${dia}/${mes}/${ano} · ${canalLabel} · Recebido: ${formatarMoeda(venda.valor_venda)}</span>
         <span class="admin-status admin-status--${venda.lucro >= 0 ? "ativo" : "inativo"}">Lucro: ${formatarMoeda(venda.lucro)}</span>
       </div>

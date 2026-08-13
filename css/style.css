@@ -777,6 +777,8 @@ img {
 
 .admin-form input[type="text"],
 .admin-form input[type="password"],
+.admin-form input[type="number"],
+.admin-form input[type="date"],
 .admin-form textarea,
 .admin-form input[type="file"],
 .admin-form select {
@@ -964,6 +966,72 @@ img {
 .admin-status--inativo {
   background: rgba(255, 107, 107, 0.15);
   color: #ff6b6b;
+}
+
+.admin-form-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-form-rotulo {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.venda-item-linha {
+  display: flex;
+  gap: 8px;
+}
+
+.venda-item-linha select {
+  flex: 1;
+  min-width: 0;
+}
+
+.venda-item-linha input {
+  width: 72px;
+}
+
+.venda-item-linha .btn {
+  padding: 10px 16px;
+  font-size: 0.9rem;
+}
+
+.venda-itens {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.venda-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+}
+
+.venda-item__remover {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.venda-item__remover:hover {
+  color: #ff6b6b;
+  border-color: #ff6b6b;
 }
 
 .admin-venda-resumo {

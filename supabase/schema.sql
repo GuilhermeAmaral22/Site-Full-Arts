@@ -68,10 +68,11 @@ create table vendas (
   produto_id uuid references produtos(id) on delete set null,
   produto_nome text not null,
   data date not null,
-  quantidade integer not null default 1,
+  quantidade integer not null default 1, -- total de unidades do pedido
   canal text not null default 'shopee', -- 'shopee' ou 'direta'
+  itens jsonb not null default '[]', -- [{produto_id, nome, peso_gramas, quantidade}] copiados no momento da venda
   valor_venda numeric not null default 0, -- valor líquido recebido (já sem a taxa do marketplace)
-  peso_gramas numeric not null default 0, -- peso de 1 unidade, copiado do produto no momento da venda
+  peso_gramas numeric not null default 0, -- peso total do pedido em gramas
   outros_custos numeric not null default 0,
   custo_producao numeric not null default 0,
   lucro numeric not null default 0,

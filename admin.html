@@ -134,21 +134,28 @@
       <div id="tab-vendas" class="admin-tab-conteudo" hidden>
 
         <p class="admin-aviso">
-          Registre aqui os pedidos já vendidos. Em <strong>Valor recebido</strong>, informe quanto
-          você efetivamente ganhou naquele pedido — se foi pela Shopee, é o valor líquido que ela
-          já repassa com a taxa dela descontada; se foi venda direta, é o valor total combinado.
-          O lucro é esse valor menos o custo de matéria-prima (peso do produto × quantidade ×
-          <strong>R$ 0,10/g</strong>) e outros custos que você informar (embalagem, etc).
+          Registre aqui os pedidos já vendidos. Monte o pedido adicionando os produtos e as
+          quantidades (um pedido pode ter vários produtos diferentes). Em <strong>Valor
+          recebido</strong>, informe quanto você efetivamente ganhou naquele pedido — se foi pela
+          Shopee, é o valor líquido que ela já repassa com a taxa dela descontada; se foi venda
+          direta, é o valor total combinado. O lucro é esse valor menos a matéria-prima de todos
+          os itens (peso × quantidade × <strong>R$ 0,10/g</strong>) e outros custos que você
+          informar (embalagem, etc).
         </p>
 
         <div class="admin-grid">
           <div class="admin-form-box">
             <h2>Registrar venda</h2>
             <form id="form-venda" class="admin-form">
-              <label>
-                Produto vendido
-                <select id="venda-produto" required></select>
-              </label>
+              <div class="admin-form-grupo">
+                <span class="admin-form-rotulo">Produtos do pedido</span>
+                <div class="venda-item-linha">
+                  <select id="venda-produto" aria-label="Produto"></select>
+                  <input type="number" id="venda-quantidade" min="1" step="1" value="1" aria-label="Quantidade" title="Quantidade" />
+                  <button type="button" id="btn-adicionar-item" class="btn btn-whatsapp">Adicionar</button>
+                </div>
+                <div id="venda-itens" class="venda-itens" hidden></div>
+              </div>
               <label>
                 Canal da venda
                 <select id="venda-canal">
@@ -159,10 +166,6 @@
               <label>
                 Data da venda
                 <input type="date" id="venda-data" required />
-              </label>
-              <label>
-                Quantidade
-                <input type="number" id="venda-quantidade" required min="1" step="1" value="1" />
               </label>
               <label>
                 Valor recebido (ex: R$ 49,90)
